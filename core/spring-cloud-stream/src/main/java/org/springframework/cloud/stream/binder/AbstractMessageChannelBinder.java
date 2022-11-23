@@ -40,6 +40,7 @@ import org.springframework.cloud.stream.config.ConsumerEndpointCustomizer;
 import org.springframework.cloud.stream.config.ListenerContainerCustomizer;
 import org.springframework.cloud.stream.config.MessageSourceCustomizer;
 import org.springframework.cloud.stream.config.ProducerMessageHandlerCustomizer;
+import org.springframework.cloud.stream.messaging.DirectWithAttributesChannel;
 import org.springframework.cloud.stream.provisioning.ConsumerDestination;
 import org.springframework.cloud.stream.provisioning.ProducerDestination;
 import org.springframework.cloud.stream.provisioning.ProvisioningException;
@@ -754,7 +755,7 @@ public abstract class AbstractMessageChannelBinder<C extends ConsumerProperties,
 			}
 		}
 		else {
-			BinderErrorChannel binderErrorChannel = new BinderErrorChannel();
+			DirectWithAttributesChannel binderErrorChannel = new DirectWithAttributesChannel();
 			binderErrorChannel.setComponentName(errorChannelName);
 			errorChannel = binderErrorChannel;
 
