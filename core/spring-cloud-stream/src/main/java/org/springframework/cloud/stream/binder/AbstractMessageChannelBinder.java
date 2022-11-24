@@ -786,18 +786,6 @@ public abstract class AbstractMessageChannelBinder<C extends ConsumerProperties,
 				? getPolledConsumerErrorMessageHandler(destination, group, consumerProperties)
 						: getErrorMessageHandler(destination, group, consumerProperties);
 
-		MessageChannel defaultErrorChannel = null;
-		if (getApplicationContext()
-				.containsBean(IntegrationContextUtils.ERROR_CHANNEL_BEAN_NAME)) {
-			defaultErrorChannel = getApplicationContext().getBean(
-					IntegrationContextUtils.ERROR_CHANNEL_BEAN_NAME,
-					MessageChannel.class);
-		}
-		if (binderProvidedErrorHandler == null && binderErrorChannel instanceof LastSubscriberAwareChannel) {
-			binderProvidedErrorHandler = getDefaultErrorMessageHandler(
-					(LastSubscriberAwareChannel) binderErrorChannel,
-					defaultErrorChannel != null);
-		}
 		String errorMessageHandlerName = getErrorMessageHandlerName(destination, group,
 				consumerProperties);
 
@@ -810,33 +798,14 @@ public abstract class AbstractMessageChannelBinder<C extends ConsumerProperties,
 							() -> h);
 					binderErrorChannel.subscribe(binderProvidedErrorHandler);
 				}
-			}
-			else {
-				this.logger.warn("The provided errorChannel '" + errorChannelName
-						+ "' is an instance of DirectChannel, "
-						+ "so no more subscribers could be added which may affect DLQ processing. "
-						+ "Resolution: Configure your own errorChannel as "
-						+ "an instance of PublishSubscribeChannel");
-			}
-		}
-
-		if (defaultErrorChannel != null) {
-			if (this.isSubscribable(binderErrorChannel)) {
-				BridgeHandler errorBridge = new BridgeHandler();
-				errorBridge.setOutputChannel(defaultErrorChannel);
-				binderErrorChannel.subscribe(errorBridge);
-
-				String errorBridgeHandlerName = getErrorBridgeName(destination, group,
-						consumerProperties);
-				if (getApplicationContext().containsBean(errorBridgeHandlerName)) {
-					((GenericApplicationContext) getApplicationContext()).registerBean(
-							errorBridgeHandlerName, BridgeHandler.class, () -> errorBridge);
+				else {
+					binderErrorChannel.subscribe((MessageHandler) getApplicationContext().getBean(errorMessageHandlerName));
 				}
 			}
 			else {
 				this.logger.warn("The provided errorChannel '" + errorChannelName
 						+ "' is an instance of DirectChannel, "
-						+ "so no more subscribers could be added and no error messages will be sent to global error channel. "
+						+ "so no more subscribers could be added which may affect DLQ processing. "
 						+ "Resolution: Configure your own errorChannel as "
 						+ "an instance of PublishSubscribeChannel");
 			}
